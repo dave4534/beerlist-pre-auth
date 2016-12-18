@@ -27,10 +27,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 //------------------------
 
-app.post('/register', passport.authenticate('register'), function (req, res) {
-  res.json(req.user);
-});
-
 app.get('/beers', function (req, res) {
   Beer.find(function (error, beers) {
     res.send(beers);
@@ -88,6 +84,33 @@ app.post('/beers/:id/reviews', function(req, res, next) {
   });
 });
 
+app.delete('/beers/:beer/reviews/:review', function(req, res, next) {
+  Beer.findById(req.params.beer, function (err, beer) {
+    for (var i = 0; i < beer.reviews.length; i ++) {
+      if (beer.reviews[i]["_id"] == req.params.review) {
+        beer.reviews.splice(i, 1);
+        beer.save();
+
+        res.status(204);
+        res.end();
+      }
+    }
+  });
+});
+
+passport.serializeUser(function (user, done) {
+  done(null, user);
+});
+
+passport.deserializeUser(function (user, done) {
+  done(null, user);
+});
+
+// send the current user back!
+app.get('/currentUser', function (req, res) {
+  res.send(req.user);
+});
+
 var LocalStrategy = require('passport-local').Strategy;
 
 passport.use('register', new LocalStrategy(function (username, password, done) {
@@ -101,18 +124,8 @@ passport.use('register', new LocalStrategy(function (username, password, done) {
   done(null, user);
 }));
 
-app.delete('/beers/:beer/reviews/:review', function(req, res, next) {
-  Beer.findById(req.params.beer, function (err, beer) {
-    for (var i = 0; i < beer.reviews.length; i ++) {
-      if (beer.reviews[i]["_id"] == req.params.review) {
-        beer.reviews.splice(i, 1);
-        beer.save();
-
-        res.status(204);
-        res.end();
-      }
-    }
-  });
+app.post('/register', passport.authenticate('register'), function (req, res) {
+  res.json(req.user);
 });
 
 app.listen(8000);
