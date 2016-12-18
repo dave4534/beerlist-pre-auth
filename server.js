@@ -99,10 +99,20 @@ app.delete('/beers/:beer/reviews/:review', function(req, res, next) {
 });
 
 passport.serializeUser(function (user, done) {
+  user = {
+    username: user.username,
+    _id: user._id
+  };
+
   done(null, user);
 });
 
 passport.deserializeUser(function (user, done) {
+  user = {
+    username: user.username,
+    _id: user._id
+  };
+
   done(null, user);
 });
 
@@ -114,18 +124,67 @@ app.get('/currentUser', function (req, res) {
 var LocalStrategy = require('passport-local').Strategy;
 
 passport.use('register', new LocalStrategy(function (username, password, done) {
-  var user = {
-    username: username,
-    password: password
-  };
+  User.findOne({ 'username': username }, function (err, user) {
+    // In case of any error return
+    if (err) {
+      console.log('Error in SignUp: ' + err);
+      return done(err);
+    }
 
-  console.log(user);
+    // already exists
+    if (user) {
+      console.log('User already exists');
+      return done(null, false);
+    } else {
+      // if there is no user with that matches
+      // create the user
+      var newUser = new User();
 
-  done(null, user);
+      // set the user's local credentials
+      newUser.username = username;
+      newUser.password = password;    // Note: Should create a hash out of this plain password!
+
+      // save the user
+      newUser.save(function (err) {
+        if (err) {
+          console.log('Error in Saving user: ' + err);
+          throw err;
+        }
+
+        console.log('User Registration successful');
+        return done(null, newUser);
+      });
+    }
+  });
 }));
 
 app.post('/register', passport.authenticate('register'), function (req, res) {
   res.json(req.user);
 });
+
+// Redirect the user to home upon going to logout route which 
+// invokes the logout function
+app.get('/logout', function(req, res) {
+  req.logout();
+  res.redirect('/');
+});
+
+app.post('/login', passport.authenticate('login'), function(req, res) {
+  res.send(req.user);
+});
+
+passport.use('login', new LocalStrategy(function (username, password, done) {
+  User.findOne({ username: username, password: password }, function (err, user) {
+    if (err) {
+      return done(err); 
+    }
+
+    if (!user) { 
+      return done(null, false); 
+    }
+
+    return done(null, user);
+  });
+}));
 
 app.listen(8000);

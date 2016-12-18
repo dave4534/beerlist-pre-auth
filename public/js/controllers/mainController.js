@@ -1,4 +1,4 @@
-app.controller('MainCtrl', ['$scope','beers', function($scope, beers){
+app.controller('MainCtrl', ['$scope','beers', 'auth', function($scope, beers, auth){
   beers.getAll().then(function () {
     $scope.beers = beers.beers;
   });
@@ -22,4 +22,16 @@ app.controller('MainCtrl', ['$scope','beers', function($scope, beers){
   $scope.removeBeer = function (beer) {
     beers.delete(beer);
   };
+
+
+
+
+
+
+ 
+
+  
+
+
+
 }]);
